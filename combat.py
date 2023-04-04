@@ -184,8 +184,7 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
                 time.sleep(1)
                 
     def __burybones(self, api: StatusSocket):
-        self.bone_ids = [item_ids.BONES, item_ids.BURNT_BONES, item_ids.WOLF_BONES, item_ids.MONKEY_BONES, item_ids.BAT_BONES, item_ids.BIG_BONES, item_ids.JOGRE_BONES, item_ids.ZOGRE_BONES, item_ids.SHAIKAHAN_BONES, item_ids.BABYDRAGON_BONES, item_ids.WYRM_BONES, item_ids.DRAGON_BONES, item_ids.WYVERN_BONES, item_ids.DRAKE_BONES, item_ids.FAYRG_BONES, item_ids.LAVA_DRAGON_BONES, item_ids.RAURG_BONES, item_ids.HYDRA_BONES, item_ids.DAGANNOTH_BONES, item_ids.OURG_BONES, item_ids.SUPERIOR_DRAGON_BONES]
-        slot_list = api.get_inv_item_indices(self.bone_ids)
+        slot_list = api.get_inv_item_indices(item_ids.all_bones)
         if len(slot_list) == 0:
             self.log_msg("No bones to bury continuing...")
             return
