@@ -29,6 +29,7 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         self.options_builder.add_text_edit_option("loot_items", "Loot items (requires re-launch):", "E.g., Coins, Dragon bones")
         self.options_builder.add_slider_option("hp_threshold", "Low HP threshold (0-100)?", 0, 100)
         self.options_builder.add_checkbox_option("bury_bones", "Bury bones?", [" "])
+        self.options_builder.add_checkbox_option("full_inv_logout", "Logout on full inventory?", [" "])
 
     def save_options(self, options: dict):
         for option in options:
@@ -40,6 +41,8 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
                 self.hp_threshold = options[option]
             elif option == "bury_bones":
                 self.bury_bones = options[option]
+            elif option == "full_inv_logout":
+                self.full_inv_logout = options[option]
             else:
                 self.log_msg(f"Unknown option: {option}")
                 print("Developer: ensure that the option keys are correct, and that options are being unpacked correctly.")
@@ -50,6 +53,7 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         self.log_msg(f'Loot items: {self.loot_items or "None"}.')
         self.log_msg(f"Bot will eat when HP is below: {self.hp_threshold}.")
         self.log_msg(f"Bot will{'' if self.bury_bones else ' not'} bury bones after picking them up")
+        self.log_msg(f"Bot will{'' if self.full_inv_logout else ' not'} logout when the inventory is full")
         self.log_msg("Options set successfully. Please launch RuneLite with the button on the right to apply settings.")
 
         self.options_set = True
@@ -109,7 +113,7 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         end_time = self.running_time * 60
         while time.time() - start_time < end_time:
             # If inventory is full...
-            if api_status.get_is_inv_full():
+            if api_status.get_is_inv_full() and self.full_inv_logout:
                 self.log_msg("Inventory is full. Idk what to do.")
                 self.set_status(BotStatus.STOPPED)
                 return
@@ -171,15 +175,17 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
     def __loot(self, api: StatusSocket):
         """Picks up loot while there is loot on the ground"""
         while self.pick_up_loot(self.loot_items):
-            if api.get_is_inv_full():
+            if api.get_is_inv_full() and self.full_inv_logout:
                 self.__logout("Inventory full. Cannot loot.")
                 return
+            if api.get_is_inv_full() and not self.full_inv_logout:
+                break
             curr_inv = len(api.get_inv())
             self.log_msg("Picking up loot...")
             for _ in range(5):  # give the bot 5 seconds to pick up the loot
                 if len(api.get_inv()) != curr_inv:
                     self.log_msg("Loot picked up.")
-                    time.sleep(1)
+                    time.sleep(rd.fancy_normal_sample(0.3, 0.5))
                     break
                 time.sleep(1)
                 
